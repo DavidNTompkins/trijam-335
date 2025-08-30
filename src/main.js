@@ -5,6 +5,8 @@ import { CharacterSelect } from './components/CharacterSelect.js';
 import { Racing } from './components/Racing.js';
 import { ControlSystem } from './systems/ControlSystem.js';
 import { EffectsSystem } from './systems/EffectsSystem.js';
+import { TextureManager } from './systems/TextureManager.js';
+import { AudioSystem } from './systems/AudioSystem.js';
 
 export class Game {
     constructor() {
@@ -25,16 +27,26 @@ export class Game {
         
         this.controlSystem = new ControlSystem();
         this.effectsSystem = null;
+        this.textureManager = new TextureManager();
+        this.audioSystem = new AudioSystem();
         
         window.game = this;
         
         this.init();
     }
 
-    init() {
+    async init() {
         this.setupRenderer();
         this.setupLights();
         this.setupCamera();
+        
+        // Load textures and audio before initializing components
+        await this.textureManager.loadTextures();
+        await this.audioSystem.init();
+        
+        // Update background with sky texture
+        this.updateSceneBackground();
+        
         this.initComponents();
         this.bindEvents();
         this.animate();
@@ -49,7 +61,9 @@ export class Game {
         this.renderer.toneMappingExposure = 1.25;
         
         this.scene.fog = new THREE.Fog(0x87CEEB, 50, 200);
-        this.scene.background = new THREE.Color(0x87CEEB);
+        
+        // Set background - will be updated with sky texture when available
+        this.updateSceneBackground();
     }
 
     setupLights() {
@@ -102,6 +116,7 @@ export class Game {
         switch (newState) {
             case 'start':
                 this.components.startMenu.show();
+                this.audioSystem.startBackgroundMusic();
                 break;
             case 'characterSelect':
                 this.components.characterSelect.show();
@@ -122,6 +137,27 @@ export class Game {
         this.camera.aspect = window.innerWidth / window.innerHeight;
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    updateSceneBackground() {
+        const skyTexture = this.textureManager.getTexture('sky');
+        if (skyTexture) {
+            // Create sky sphere
+            const skyGeometry = new THREE.SphereGeometry(500, 32, 32);
+            const skyMaterial = new THREE.MeshBasicMaterial({
+                map: skyTexture,
+                side: THREE.BackSide
+            });
+            
+            if (this.skyMesh) {
+                this.scene.remove(this.skyMesh);
+            }
+            
+            this.skyMesh = new THREE.Mesh(skyGeometry, skyMaterial);
+            this.scene.add(this.skyMesh);
+        } else {
+            this.scene.background = new THREE.Color(0x87CEEB);
+        }
     }
 
     createKeyPressEffect(keyInfo, color) {

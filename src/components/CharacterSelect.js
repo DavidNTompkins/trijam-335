@@ -46,6 +46,22 @@ export class CharacterSelect {
                 speed: 1.5,
                 acceleration: 1.0,
                 handling: 1.0
+            },
+            {
+                name: "Turbo",
+                description: "The fastest snail in the west",
+                color: 0xFF6B6B,
+                speed: 1.8,
+                acceleration: 1.4,
+                handling: 0.8
+            },
+            {
+                name: "Chomper",
+                description: "He eats everything in his path",
+                color: 0x9B59B6,
+                speed: 0.9,
+                acceleration: 0.8,
+                handling: 1.2
             }
         ];
     }
@@ -70,9 +86,11 @@ export class CharacterSelect {
 
     async createCharacterModels() {
         const positions = [
-            { x: -8, y: 0, z: 0 },
+            { x: -12, y: 0, z: 0 },
+            { x: -6, y: 0, z: 0 },
             { x: 0, y: 0, z: 0 },
-            { x: 8, y: 0, z: 0 }
+            { x: 6, y: 0, z: 0 },
+            { x: 12, y: 0, z: 0 }
         ];
 
         for (let i = 0; i < this.characters.length; i++) {
@@ -164,10 +182,10 @@ export class CharacterSelect {
             let targetX;
             if (index === this.currentCharacterIndex) {
                 targetX = 0;
-            } else if (index < this.currentCharacterIndex) {
-                targetX = -20 - (this.currentCharacterIndex - index - 1) * 5;
             } else {
-                targetX = 20 + (index - this.currentCharacterIndex - 1) * 5;
+                const distance = Math.abs(index - this.currentCharacterIndex);
+                const direction = index < this.currentCharacterIndex ? -1 : 1;
+                targetX = direction * (15 + distance * 8);
             }
             
             this.animateModelPosition(model, targetX, () => {
@@ -209,6 +227,9 @@ export class CharacterSelect {
     selectCurrentCharacter() {
         this.game.selectedCharacter = this.characters[this.currentCharacterIndex];
         this.game.selectedCharacterIndex = this.currentCharacterIndex;
+        console.log(`Character selected: ${this.currentCharacterIndex}, ${this.characters[this.currentCharacterIndex].name}`);
+        console.log('Game selectedCharacterIndex:', this.game.selectedCharacterIndex);
+        console.log('Game selectedCharacter:', this.game.selectedCharacter);
         this.game.setState('racing');
     }
 

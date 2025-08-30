@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { CollisionSystem } from '../systems/CollisionSystem.js';
 
 export class Racing {
     constructor(game) {
@@ -24,6 +25,7 @@ export class Racing {
         
         this.time = 0;
         this.cameraShake = { x: 0, y: 0, intensity: 0 };
+        this.collisionSystem = new CollisionSystem();
         
         this.setupTrack();
         this.setupPlayer();
@@ -117,8 +119,10 @@ export class Racing {
         trackGeometry.setIndex(indices);
         trackGeometry.computeVertexNormals();
         
+        const asphaltTexture = this.game.textureManager.getTexture('asphalt');
         const trackMaterial = new THREE.MeshLambertMaterial({ 
-            color: 0x8B4513,
+            color: asphaltTexture ? 0xFFFFFF : 0x8B4513,
+            map: asphaltTexture,
             side: THREE.DoubleSide
         });
         
@@ -129,7 +133,11 @@ export class Racing {
 
     createGrassMesh() {
         const grassGeometry = new THREE.PlaneGeometry(200, 200);
-        const grassMaterial = new THREE.MeshLambertMaterial({ color: 0x228B22 });
+        const grassTexture = this.game.textureManager.getTexture('grass');
+        const grassMaterial = new THREE.MeshLambertMaterial({ 
+            color: grassTexture ? 0xFFFFFF : 0x228B22,
+            map: grassTexture
+        });
         
         const grassMesh = new THREE.Mesh(grassGeometry, grassMaterial);
         grassMesh.rotation.x = -Math.PI / 2;
@@ -241,7 +249,7 @@ export class Racing {
             character: null
         };
         
-        this.createPlayerModel();
+        // Player model will be created when racing starts with selected character
     }
 
     async createPlayerModel() {
@@ -270,7 +278,7 @@ export class Racing {
         
         model.position.copy(this.player.position);
         model.position.y = 0.5;
-        model.rotation.y = this.player.rotation + Math.PI/2;
+        model.rotation.y = this.player.rotation - Math.PI/2;
         model.scale.set(1.5, 1.5, 1.5);
         
         this.player.model = model;
@@ -303,13 +311,14 @@ export class Racing {
         const playerCharacterIndex = this.game.selectedCharacterIndex || 0;
         
         try {
-            let modelIndex;
-            if (index < 2) {
-                modelIndex = index + 4;
-            } else {
-                const availableModels = [1, 2, 3].filter(i => i !== (playerCharacterIndex + 1));
-                modelIndex = availableModels[(index - 2) % availableModels.length];
-            }
+            // Create list of all available models (1-5) excluding the player's choice
+            const allModels = [1, 2, 3, 4, 5];
+            const availableModels = allModels.filter(i => i !== (playerCharacterIndex + 1));
+            
+            // Assign models cyclically from available ones
+            const modelIndex = availableModels[index % availableModels.length];
+            
+            console.log(`AI ${index}: Using model ${modelIndex}, player has ${playerCharacterIndex + 1}`);
             
             const gltf = await this.game.loader.loadAsync(`assets/models/snail_${modelIndex}.glb`);
             model = gltf.scene.clone();
@@ -327,7 +336,7 @@ export class Racing {
         
         model.position.copy(ai.position);
         model.position.y = 0.5;
-        model.rotation.y = ai.rotation + Math.PI/2;
+        model.rotation.y = ai.rotation - Math.PI/2;
         model.scale.set(1.2, 1.2, 1.2);
         
         ai.model = model;
@@ -518,7 +527,7 @@ export class Racing {
         
         this.player.model.position.copy(this.player.position);
         this.player.model.position.y = 0.5;
-        this.player.model.rotation.y = this.player.rotation + Math.PI/2;
+        this.player.model.rotation.y =  (-1* this.player.rotation + Math.PI/2);
         
         this.checkPlayerGates();
     }
@@ -545,7 +554,7 @@ export class Racing {
             }
             
             ai.model.position.copy(ai.position);
-            ai.model.rotation.y = ai.rotation + Math.PI/2;
+            ai.model.rotation.y = ai.rotation - Math.PI/2;
             
             const bobbing = Math.sin(this.time * 4 + ai.personality * 10) * 0.1;
             ai.model.position.y = 0.5 + bobbing;
@@ -636,7 +645,7 @@ export class Racing {
         }
     }
 
-    show() {
+    async show() {
         this.element.classList.remove('hidden');
         this.isVisible = true;
         
@@ -645,6 +654,12 @@ export class Racing {
         if (this.fenceGroup) this.fenceGroup.visible = true;
         if (this.startGateMesh) this.startGateMesh.visible = true;
         if (this.halfwayGateMesh) this.halfwayGateMesh.visible = true;
+        
+        // Create player model with selected character
+        if (!this.player.model) {
+            await this.createPlayerModel();
+        }
+        
         if (this.player.model) this.player.model.visible = true;
         this.aiRacers.forEach(ai => {
             if (ai.model) ai.model.visible = true;
@@ -686,6 +701,7 @@ export class Racing {
         this.game.controlSystem.update(deltaTime);
         this.updatePlayer(deltaTime);
         this.updateAIRacers(deltaTime);
+        this.updateCollisions();
         this.updateParticles(deltaTime);
         this.updateCamera(deltaTime);
     }
@@ -699,5 +715,20 @@ export class Racing {
         });
         
         this.game.controlSystem.deactivate();
+    }
+
+    updateCollisions() {
+        if (!this.raceStarted) return;
+        
+        const collisions = this.collisionSystem.checkAllCollisions(this.player, this.aiRacers);
+        
+        // Create effects for collisions
+        collisions.forEach(collision => {
+            const midpoint = new THREE.Vector3()
+                .addVectors(collision.racer1.position, collision.racer2.position)
+                .multiplyScalar(0.5);
+            
+            this.collisionSystem.createCollisionEffect(midpoint, this.game);
+        });
     }
 }
