@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snail Racing Championship</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #2c5530, #4a7c59);
+            overflow: hidden;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #game-canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        .ui-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .ui-element {
+            pointer-events: auto;
+            position: absolute;
+        }
+
+        .menu-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            text-align: center;
+        }
+
+        .menu-title {
+            font-size: 4rem;
+            margin-bottom: 2rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+            background: linear-gradient(45deg, #4CAF50, #8BC34A);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .menu-button {
+            font-size: 1.5rem;
+            padding: 15px 30px;
+            margin: 10px;
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .menu-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+            background: linear-gradient(45deg, #45a049, #4CAF50);
+        }
+
+        .character-select-header {
+            position: absolute;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px 40px;
+            border-radius: 15px;
+            z-index: 200;
+        }
+
+        .character-info-top h3 {
+            font-size: 2rem;
+            margin: 10px 0 5px 0;
+            color: #4CAF50;
+        }
+
+        .character-info-top p {
+            font-size: 1.1rem;
+            margin: 0;
+            opacity: 0.9;
+        }
+
+        .character-controls {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border-radius: 15px;
+            z-index: 200;
+        }
+
+        .controls-hint {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.9rem;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 5px;
+            max-width: 300px;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="game-canvas"></canvas>
+        <div class="ui-overlay">
+            <!-- Start Menu -->
+            <div id="start-menu" class="ui-element menu-container">
+                <h1 class="menu-title">🐌 Snail Racing Championship</h1>
+                <button id="start-button" class="menu-button">Start Race</button>
+                <div style="margin-top: 2rem; font-size: 1rem; opacity: 0.8;">
+                    Use your keyboard in wave motions to control your snail!<br>
+                    Top row (QWERTY...) = Turn Right & Forward<br>
+                    Middle row (ASDF...) = Forward<br>
+                    Bottom row (ZXCV...) = Turn Left & Forward
+                </div>
+            </div>
+
+            <!-- Character Select Menu -->
+            <div id="character-select" class="ui-element hidden">
+                <div class="character-select-header">
+                    <h2 class="menu-title">Choose Your Snail</h2>
+                    <div class="character-info-top">
+                        <h3 id="character-name">Slick</h3>
+                        <p id="character-description">He was a sprinter before he got SNAILED</p>
+                    </div>
+                </div>
+                <div class="character-controls">
+                    <div style="display: flex; flex-direction: column; align-items: center;">
+                        <span style="opacity: 0.7; font-size: 1.2rem; margin-bottom: 15px;">← A/D to change character →</span>
+                        <button id="select-character" class="menu-button">Select Snail</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Racing UI -->
+            <div id="racing-ui" class="ui-element hidden">
+                <div class="controls-hint">
+                    Move your hands in waves across the keyboard!<br>
+                    🔴 Top row: Forward + Right turn<br>
+                    🟡 Middle row: Forward only<br>
+                    🟢 Bottom row: Forward + Left turn
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="src/main.js"></script>
+</body>
+</html>

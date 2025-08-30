@@ -1,0 +1,17 @@
+{
+  "name": "snail-racing-game",
+  "version": "1.0.0",
+  "description": "A three.js snail racing game with unique wave-motion controls",
+  "main": "src/main.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "three": "^0.158.0"
+  },
+  "devDependencies": {
+    "vite": "^4.5.0"
+  }
+}

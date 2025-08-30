@@ -1,0 +1,12 @@
+This is a three.js powered game where you play as a snail in a snail racing game. The game has a high level of polish, with particle effects, slight camera jitter on impacts or events, and blur/lines to indicate high speeds. 
+
+This game should be organized into components. Rather than putting all code into the main javascript file, it should be broken down into individual components whenever reasonable.
+
+This game has the following components:
+- A start menu
+- A character select menu (three characters, represented by .glb models, which move to center screen in series as the player hits left/right keys) 
+- Racing (single track)
+
+A unique attribute of this game is the control system which mimics a snail. The player puts their hand on the keyboard and moves it up and down in a wave. The sequence and speed of their movement controls both speed and direction. The top row of keys (w,e,r,t,y,u,i,o) moves them forward and turns slight to the right. The middle row of keys (a,s,d,f,g,h,j,k,l) only moves them forward. The bottom row of keys ( z,x,c,v,b,n,m, ',') moves them forward and turns them to the left. The amount of speed added per key click is determined by the last key pressed in that row and is given by the formula: boost = e^(-a*t) *(1/2)^(x-1), where a is a control parameter for decay (e.g., how much speed matters), and x is how many keys after the last key is being pressed. So pressing two keys next to each other in order provides more boost than skipping a key. 
+
+This project uses three.js and will be uploaded to itch after all work is done (no instructions/help needed with upload at this time). Please ensure we have a node environment that is capable of providing .glb assets. 
