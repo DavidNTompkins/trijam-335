@@ -121,7 +121,7 @@ export class CollisionSystem {
         
         // Add camera shake if player is involved - reduced intensity
         if (game.components.racing) {
-            game.components.racing.addCameraShake(0.1);  // Reduced from 0.3 to 0.1
+            game.components.racing.addCameraShake(0.01);  // Reduced from 0.3 to 0.1
         }
     }
 }

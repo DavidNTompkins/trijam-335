@@ -12,16 +12,18 @@ export class Racing {
         this.aiRacers = [];
         this.checkpoints = [];
         this.particles = [];
-        
+
+        // Race state / UI
         this.raceProgress = {
             player: 0,
             aiRacers: []
         };
-        
         this.raceStarted = false;
         this.raceFinished = false;
         this.countdown = 3;
         this.countdownTimer = 0;
+        this.finishOrder = [];       // NEW: order racers cross 2 laps
+        this.finishBannerEl = null;  // NEW: DOM overlay element
         
         this.time = 0;
         this.cameraShake = { x: 0, y: 0, intensity: 0 };
@@ -82,6 +84,8 @@ export class Racing {
         const trackGeometry = new THREE.BufferGeometry();
         
         const vertices = [];
+        theIndices: {
+        }
         const indices = [];
         const uvs = [];
         
@@ -297,13 +301,14 @@ export class Racing {
                 model: null,
                 position: startPos.clone(),  // Start at same position
                 rotation: Math.PI / 2,
-                speed: 2.4 + Math.random() * 0.4,
+                speed: 2.6 + Math.random() * 0.4,
                 lap: 0,
                 trackProgress: 0,
                 targetTrackProgress: (i + 1) * 0.1,
                 personality: Math.random(),
                 color: colors[i],
-                startPosition: startPos.clone()  // Store starting position
+                startPosition: startPos.clone(),  // Store starting position
+                finished: false                   // NEW
             };
             
             this.aiRacers.push(ai);
@@ -461,12 +466,47 @@ export class Racing {
     }
 
     startRace() {
+        // Reset race state for a clean start
         this.raceStarted = false;
+        this.raceFinished = false;
+        this.finishOrder = [];
         this.countdown = 3;
         this.countdownTimer = 0;
+
+        // Reset UI banner if it exists
+        if (this.finishBannerEl) {
+            this.finishBannerEl.remove();
+            this.finishBannerEl = null;
+        }
+
+        // Reset player state
+        if (this.player) {
+            this.player.lap = 0;
+            this.player.passedStartLine = false;
+            this.player.passedHalfwayPoint = false;
+            this.player.velocity.set(0, 0, 0);
+            if (this.player.model) {
+                this.player.position.set(-40, 0, -20);
+                this.player.rotation = Math.PI / 2;
+                this.player.model.position.copy(this.player.position);
+                this.player.model.rotation.y = this.player.rotation - Math.PI / 2;
+            }
+        }
+
+        // Reset AIs
+        this.aiRacers.forEach(ai => {
+            ai.lap = 0;
+            ai.trackProgress = 0;
+            ai.finished = false;
+            ai.position.copy(ai.startPosition);
+            if (ai.model) {
+                ai.model.position.copy(ai.startPosition);
+                ai.model.rotation.y = ai.rotation;
+            }
+        });
         
         this.game.controlSystem.setInputCallback((inputData) => {
-            if (this.raceStarted) {
+            if (this.raceStarted && !this.raceFinished) {
                 this.handlePlayerInput(inputData);
             }
         });
@@ -526,7 +566,7 @@ export class Racing {
     }
 
     updatePlayer(deltaTime) {
-        if (!this.raceStarted || !this.player.model) return;
+        if (!this.raceStarted || this.raceFinished || !this.player.model) return;
         
         this.player.position.add(this.player.velocity.clone().multiplyScalar(deltaTime));
         
@@ -540,10 +580,34 @@ export class Racing {
     updateAIRacers(deltaTime) {
         this.aiRacers.forEach((ai, index) => {
             if (!ai.model) return;
+            if (this.raceFinished) {
+                // Freeze AI when race is finished
+                ai.model.position.copy(ai.position);
+                ai.model.rotation.y = -1 * ai.rotation + Math.PI/2;
+                ai.model.position.y = 0.5;
+                return;
+            }
             
             if (this.raceStarted) {
+                const prev = ai.trackProgress;                          // NEW: track previous progress
                 ai.trackProgress += ai.speed * deltaTime * 0.01;
                 ai.trackProgress = ai.trackProgress % 1.0;
+                
+                // NEW: Lap detection on wrap
+                if (prev > ai.trackProgress) {
+                    ai.lap++;
+                    if (ai.lap >= 2 && !ai.finished) {
+                        ai.finished = true;
+                        this.finishOrder.push(`ai_${index}`);
+                        if (this.game.effectsSystem) {
+                            this.game.effectsSystem.createParticleExplosion(
+                                ai.position.clone().add(new THREE.Vector3(0, 2, 0)),
+                                0xFFD700,
+                                12
+                            );
+                        }
+                    }
+                }
                 
                 const trackPoint = this.trackPath.getPointAt(ai.trackProgress);
                 const nextPoint = this.trackPath.getPointAt((ai.trackProgress + 0.01) % 1.0);
@@ -596,6 +660,11 @@ export class Racing {
                         15
                     );
                 }
+
+                // NEW: finish when player hits lap 2
+                if (!this.raceFinished && this.player.lap >= 2) {
+                    this.onPlayerFinish();
+                }
             }
         }
     }
@@ -615,7 +684,7 @@ export class Racing {
     }
 
     updateCamera(deltaTime) {
-        if (!this.player.model) return;
+        if (!this.player?.model) return;
         
         const targetPos = this.player.position.clone();
         targetPos.y = 8;
@@ -697,6 +766,11 @@ export class Racing {
         this.aiRacers.forEach(ai => {
             if (ai.model) ai.model.visible = false;
         });
+
+        if (this.finishBannerEl) {
+            this.finishBannerEl.remove();
+            this.finishBannerEl = null;
+        }
         
         this.game.controlSystem.deactivate();
     }
@@ -724,17 +798,22 @@ export class Racing {
 
     destroy() {
         if (this.track) this.game.scene.remove(this.track);
-        if (this.player.model) this.game.scene.remove(this.player.model);
+        if (this.player?.model) this.game.scene.remove(this.player.model);
         
         this.aiRacers.forEach(ai => {
             if (ai.model) this.game.scene.remove(ai.model);
         });
+
+        if (this.finishBannerEl) {
+            this.finishBannerEl.remove();
+            this.finishBannerEl = null;
+        }
         
         this.game.controlSystem.deactivate();
     }
 
     updateCollisions() {
-        if (!this.raceStarted) return;
+        if (!this.raceStarted || this.raceFinished) return;
         
         const collisions = this.collisionSystem.checkAllCollisions(this.player, this.aiRacers);
         
@@ -746,5 +825,53 @@ export class Racing {
             
             this.collisionSystem.createCollisionEffect(midpoint, this.game);
         });
+    }
+
+    // ===== NEW helpers =====
+    getOrdinal(n) {
+        const s = ["th","st","nd","rd"], v = n % 100;
+        return n + (s[(v - 20) % 10] || s[v] || s[0]);
+    }
+
+    showFinishBanner(place) {
+        if (this.finishBannerEl) this.finishBannerEl.remove();
+
+        const overlay = document.createElement('div');
+        overlay.id = 'finish-overlay';
+        Object.assign(overlay.style, {
+            position: 'fixed',
+            inset: '0',
+            display: 'grid',
+            placeItems: 'center',
+            background: 'rgba(0,0,0,0.35)',
+            zIndex: 9999,
+            pointerEvents: 'none',
+        });
+
+        const box = document.createElement('div');
+        Object.assign(box.style, {
+            color: '#fff',
+            fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, sans-serif',
+            textAlign: 'center',
+            textShadow: '0 2px 12px rgba(0,0,0,0.5)',
+        });
+        box.innerHTML = `
+            <div style="font-size: 72px; font-weight: 900; letter-spacing: 2px;">FINISH!</div>
+            <div style="font-size: 28px; margin-top: 8px;">You came ${this.getOrdinal(place)}.</div>
+        `;
+
+        overlay.appendChild(box);
+        document.body.appendChild(overlay);
+        this.finishBannerEl = overlay;
+    }
+
+    onPlayerFinish() {
+        // Place = everyone who already finished + 1
+        const place = this.finishOrder.length + 1;
+        this.finishOrder.push('player');
+
+        this.raceFinished = true;
+        this.game.controlSystem.deactivate();   // stop inputs
+        this.showFinishBanner(place);
     }
 }

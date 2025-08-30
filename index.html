@@ -1,190 +1,270 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Snail Racing Championship</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Maximum SNAIL</title>
+  <style>
+    :root{
+      --bg1:#2c5530;
+      --bg2:#4a7c59;
+      --glass: rgba(0,0,0,0.65);
+      --glass-strong: rgba(0,0,0,0.8);
+      --accent1:#4CAF50;
+      --accent2:#8BC34A;
+      --text:#fff;
+      --muted:rgba(255,255,255,.85);
+      --shadow: 0 8px 30px rgba(0,0,0,.35);
+      --radius: 18px;
+    }
 
-        body {
-            font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #2c5530, #4a7c59);
-            overflow: hidden;
-        }
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: linear-gradient(135deg, var(--bg1), var(--bg2));
+      overflow: hidden;
+    }
 
-        #game-container {
-            position: relative;
-            width: 100vw;
-            height: 100vh;
-        }
+    #game-container{position:relative;width:100vw;height:100vh}
+    #game-canvas{display:block;width:100%;height:100%}
 
-        #game-canvas {
-            display: block;
-            width: 100%;
-            height: 100%;
-        }
+    /* Overlay scaffolding */
+    .ui-overlay{
+      position:absolute;inset:0;
+      pointer-events:none; z-index:100;
+    }
+    .ui-element{pointer-events:auto; position:absolute}
 
-        .ui-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 100;
-        }
+    /* Make full-screen screens actually fill the overlay (fixes 0,0 issue) */
+    #character-select, #racing-ui { position:absolute; inset:0; }
 
-        .ui-element {
-            pointer-events: auto;
-            position: absolute;
-        }
+    /* --- Start Menu --- */
+    .menu-container{
+      inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+      background: rgba(0,0,0,.78); color:var(--text); text-align:center;
+      padding: 32px;
+    }
+    .menu-title{
+      font-size: clamp(2.4rem, 6vw, 4rem);
+      margin-bottom: 1.25rem;
+      line-height: 1.05;
+      background: linear-gradient(45deg, var(--accent1), var(--accent2));
+      -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+      text-shadow: 0 2px 10px rgba(0,0,0,.35);
+    }
 
-        .menu-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            text-align: center;
-        }
+    .menu-cta{
+      display:flex; gap:24px; align-items:center; justify-content:center;
+      flex-wrap: wrap; margin-top: 1.25rem;
+    }
+    .menu-button{
+      font-size:1.25rem; padding:14px 28px; border:none; border-radius:999px; cursor:pointer;
+      background: linear-gradient(45deg, #4CAF50, #45a049); color:white;
+      transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+      box-shadow: 0 8px 18px rgba(0,0,0,.35);
+    }
+    .menu-button:hover{ transform: translateY(-2px); box-shadow: 0 12px 24px rgba(0,0,0,.45); background: linear-gradient(45deg, #45a049, #4CAF50); }
 
-        .menu-title {
-            font-size: 4rem;
-            margin-bottom: 2rem;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
-            background: linear-gradient(45deg, #4CAF50, #8BC34A);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
+    .start-card{
+      display:grid; gap:18px;
+      background: var(--glass);
+      border: 1px solid rgba(255,255,255,.08);
+      box-shadow: var(--shadow);
+      border-radius: var(--radius);
+      padding:16px; width: min(920px, 92vw);
+      text-align:left;
+    }
 
-        .menu-button {
-            font-size: 1.5rem;
-            padding: 15px 30px;
-            margin: 10px;
-            background: linear-gradient(45deg, #4CAF50, #45a049);
-            color: white;
-            border: none;
-            border-radius: 25px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-        }
+    /* STACK (gif above, text below) — this fixes your first-screen layout */
+    .start-top{
+      display:grid; grid-template-columns: 1fr; gap:16px;
+    }
+    .start-gif{
+      width:100%; aspect-ratio: 16/9; object-fit: cover; border-radius: calc(var(--radius) - 4px);
+      outline: 1px solid rgba(255,255,255,.08);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.04);
+    }
+    .start-info{
+      color:var(--muted); font-size:1rem;
+    }
+    .start-info h3{
+      color: var(--text); font-size:1.25rem; margin-bottom:6px;
+    }
+    .start-info ul{ margin-left:1.1rem }
+    .start-info li{ margin: 6px 0 }
+    .start-basics{
+      margin-top: 8px; font-size:.95rem; opacity:.9;
+      background: rgba(255,255,255,.06); padding:10px 12px; border-radius: 12px;
+    }
 
-        .menu-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
-            background: linear-gradient(45deg, #45a049, #4CAF50);
-        }
+    /* --- Character Select --- */
+    .character-select-header{
+      position:absolute; top:24px; left:50%; transform:translateX(-50%);
+      color:var(--text); text-align:center; background: var(--glass-strong);
+      padding: 16px 28px; border-radius: var(--radius); z-index:200;
+      border: 1px solid rgba(255,255,255,.08); box-shadow: var(--shadow);
+    }
 
-        .character-select-header {
-            position: absolute;
-            top: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: white;
-            text-align: center;
-            background: rgba(0, 0, 0, 0.8);
-            padding: 20px 40px;
-            border-radius: 15px;
-            z-index: 200;
-        }
+    /* Info+stats panel placed ~70% down, centered */
+    .character-info-panel, .hud-panel{
+      position:absolute; left:50%; top:70%; transform: translate(-50%, -50%);
+      width: min(840px, 92vw);
+      background: var(--glass);
+      border: 1px solid rgba(255,255,255,.09);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      color: var(--text);
+      z-index:200;
+      padding: 16px;
+      backdrop-filter: blur(12px);
+    }
+    .panel-grid{
+      display:grid; grid-template-columns: 1.1fr .9fr; gap:16px;
+    }
+    .panel-title{
+      font-size:1.4rem; margin-bottom:4px; color: var(--accent2);
+      text-shadow: 0 1px 6px rgba(0,0,0,.35);
+    }
+    .panel-sub{ opacity:.9; font-size:1rem }
 
-        .character-info-top h3 {
-            font-size: 2rem;
-            margin: 10px 0 5px 0;
-            color: #4CAF50;
-        }
+    /* Stat bars */
+    .stats{
+      display:grid; gap:10px; margin-top:8px;
+    }
+    .stat{
+      display:grid; grid-template-columns: 120px 1fr; gap:10px; align-items:center;
+      font-size:.95rem;
+    }
+    .stat-label{ opacity:.9 }
+    .bar{
+      position:relative; height:10px; border-radius:999px; overflow:hidden;
+      background: rgba(255,255,255,.12);
+      outline: 1px solid rgba(255,255,255,.08);
+    }
+    .fill{
+      position:absolute; inset:0 auto 0 0; width: 50%;
+      background: linear-gradient(90deg, var(--accent1), var(--accent2));
+      border-radius:999px;
+      transition: width .25s ease;
+    }
 
-        .character-info-top p {
-            font-size: 1.1rem;
-            margin: 0;
-            opacity: 0.9;
-        }
+    /* Character controls (A/D + Select) */
+    .character-controls{
+      position:absolute; bottom:34px; left:50%; transform:translateX(-50%);
+      color:var(--text); text-align:center; background: rgba(0,0,0,.7);
+      padding: 16px 18px; border-radius: var(--radius); z-index:200;
+      border: 1px solid rgba(255,255,255,.08); box-shadow: var(--shadow);
+    }
 
-        .character-controls {
-            position: absolute;
-            bottom: 40px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: white;
-            text-align: center;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 20px;
-            border-radius: 15px;
-            z-index: 200;
-        }
+    /* --- Racing UI --- */
+    .controls-hint{
+      position:absolute; top:18px; left:18px; color:var(--muted); font-size:.95rem;
+      background: rgba(0,0,0,.5); padding:10px 12px; border-radius: 10px; max-width: 320px;
+      border: 1px solid rgba(255,255,255,.08);
+    }
+    .hud-stats{
+      display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap:12px; margin-top:8px;
+    }
+    .hud-item{
+      background: rgba(255,255,255,.06); padding:10px 12px; border-radius:12px;
+      text-align:center; border: 1px solid rgba(255,255,255,.08);
+    }
+    .hud-item .label{ font-size:.8rem; opacity:.85 }
+    .hud-item .value{ font-size:1.2rem; font-weight:700; margin-top:2px }
 
-        .controls-hint {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 0.9rem;
-            background: rgba(0, 0, 0, 0.5);
-            padding: 10px;
-            border-radius: 5px;
-            max-width: 300px;
-        }
+    .hidden{ display:none }
 
-        .hidden {
-            display: none;
-        }
-    </style>
+    /* Responsive tweaks */
+    @media (max-width: 960px){
+      .panel-grid{ grid-template-columns: 1fr }
+      .character-info-panel, .hud-panel{ top:74% }
+    }
+  </style>
 </head>
 <body>
-    <div id="game-container">
-        <canvas id="game-canvas"></canvas>
-        <div class="ui-overlay">
-            <!-- Start Menu -->
-            <div id="start-menu" class="ui-element menu-container">
-                <h1 class="menu-title">🐌 Snail Racing Championship</h1>
+  <div id="game-container">
+    <canvas id="game-canvas"></canvas>
+
+    <div class="ui-overlay">
+      <!-- ===================== START MENU ===================== -->
+      <div id="start-menu" class="ui-element menu-container">
+        <h1 class="menu-title">🐌 MAXIMUM SNAIL</h1>
+
+        <div class="start-card">
+          <div class="start-top">
+            <!-- Replace src with your actual GIF path if different -->
+             <div style="margin-top:.35rem; font-size:.95rem; opacity:.9; color:var(--muted)">
+            Flop your nasty hand on the keyboard like a snail! Press keys from left to right in a wave to go faster.
+          </div>
+            <img
+  id="start-gif"
+  src="assets/snail-controls.gif"
+  alt="Demo of wave-typing to move the snail (rows triggering turns and speed)"
+  style="display: block; margin: 0 auto; max-width: 320px; height: auto;"
+/>
+
+
+            <div class="start-info">
+              
+
+              <div class="start-basics">
+                Top row (WERTY...) → Forward + Right turn<br/>
+                Middle row (ASDF...) → Forward only<br/>
+                Bottom row (ZXCV...) → Forward + Left turn
+              </div>
+
+              <div class="menu-cta">
                 <button id="start-button" class="menu-button">Start Race</button>
-                <div style="margin-top: 2rem; font-size: 1rem; opacity: 0.8;">
-                    Use your keyboard in wave motions to control your snail!<br>
-                    Top row (QWERTY...) = Turn Right & Forward<br>
-                    Middle row (ASDF...) = Forward<br>
-                    Bottom row (ZXCV...) = Turn Left & Forward
-                </div>
+              </div>
             </div>
+          </div>
 
-            <!-- Character Select Menu -->
-            <div id="character-select" class="ui-element hidden">
-                <div class="character-select-header">
-                    <h2 class="menu-title">Choose Your Snail</h2>
-                    <div class="character-info-top">
-                        <h3 id="character-name">Slick</h3>
-                        <p id="character-description">He was a sprinter before he got SNAILED</p>
-                    </div>
-                </div>
-                <div class="character-controls">
-                    <div style="display: flex; flex-direction: column; align-items: center;">
-                        <span style="opacity: 0.7; font-size: 1.2rem; margin-bottom: 15px;">← A/D to change character →</span>
-                        <button id="select-character" class="menu-button">Select Snail</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Racing UI -->
-            <div id="racing-ui" class="ui-element hidden">
-                <div class="controls-hint">
-                    Move your hands in waves across the keyboard!<br>
-                    🔴 Top row: Forward + Right turn<br>
-                    🟡 Middle row: Forward only<br>
-                    🟢 Bottom row: Forward + Left turn
-                </div>
-            </div>
+          
         </div>
-    </div>
+      </div>
 
-    <script type="module" src="src/main.js"></script>
+      <!-- ===================== CHARACTER SELECT ===================== -->
+      <div id="character-select" class="ui-element hidden">
+        <div class="character-select-header">
+          <h2 class="menu-title" style="font-size:2rem;margin:0">Choose Your Snail</h2>
+        </div>
+
+        <!-- ~70% down, centered -->
+        <div class="character-info-panel" aria-live="polite">
+          <div class="panel-grid">
+            <div>
+              <div class="panel-title" id="character-name">Slick</div>
+              <div class="panel-sub" id="character-description">He was a sprinter before he got SNAILED</div>
+            </div>
+
+            
+          </div>
+        </div>
+
+        <div class="character-controls">
+          <div style="display:flex;flex-direction:column;align-items:center;">
+            <span style="opacity:.8;font-size:1.1rem;margin-bottom:12px;">← A/D to change character →</span>
+            <button id="select-character" class="menu-button">Select Snail</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================== RACING UI ===================== -->
+      <div id="racing-ui" class="ui-element hidden">
+        <div class="controls-hint">
+          Move your hands in waves across the keyboard<br>
+        Top row: Forward + Right turn<br>
+          Middle row: Forward only<br>
+           Bottom row: Forward + Left turn
+        </div>
+
+        <!-- ~70% down, centered under the character model -->
+        
+      </div>
+
+    </div> <!-- /ui-overlay -->
+  </div> <!-- /game-container -->
+
+  <script type="module" src="src/main.js"></script>
 </body>
 </html>

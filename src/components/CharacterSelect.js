@@ -27,15 +27,15 @@ export class CharacterSelect {
                 name: "Slick",
                 description: "He was a sprinter before he got SNAILED",
                 color: 0x32CD32,
-                speed: 1.2,
+                speed: 1.3,
                 acceleration: 1.1,
                 handling: 1.3
             },
             {
                 name: "Wally",
-                description: "He's been eating a lot of grass",
+                description: "He did this to himself",
                 color: 0x8B4513,
-                speed: 1.0,
+                speed: 1.2,
                 acceleration: 0.7,
                 handling: 0.9
             },
@@ -43,23 +43,23 @@ export class CharacterSelect {
                 name: "Baphomet",
                 description: "He was SNAILED as a punishment for evil doing",
                 color: 0x4169E1,
-                speed: 1.5,
+                speed: 1.3,
                 acceleration: 1.0,
                 handling: 1.0
             },
             {
-                name: "Sally",
-                description: "The fastest snail in the west",
+                name: "Boss Jenkins",
+                description: "He's been eating a lot of grass",
                 color: 0xFF6B6B,
-                speed: 1.8,
+                speed: 1.1,
                 acceleration: 1.4,
                 handling: 0.8
             },
             {
-                name: "Chomper",
-                description: "He eats everything in his path",
+                name: "Susanna",
+                description: "She's been SNAILED to learn about SAAS sales",
                 color: 0x9B59B6,
-                speed: 0.9,
+                speed: 1.3,
                 acceleration: 0.8,
                 handling: 1.2
             }
@@ -270,10 +270,10 @@ export class CharacterSelect {
         
         this.characterModels.forEach((model, index) => {
             if (index === this.currentCharacterIndex) {
-                model.rotation.y += deltaTime * 0.5;
+                model.rotation.y += deltaTime * 1;
                 model.position.y = 1 + Math.sin(this.time * 3) * 0.3;
             } else {
-                model.rotation.y += deltaTime * 0.2;
+                model.rotation.y += deltaTime * 0.8;
                 model.position.y = 1;
             }
         });
