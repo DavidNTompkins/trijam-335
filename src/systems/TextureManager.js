@@ -11,9 +11,9 @@ export class TextureManager {
 
     async loadTextures() {
         const textureDefinitions = [
-            { name: 'grass', path: 'assets/textures/grass.jpg', repeat: [8, 8] },
-            { name: 'asphalt', path: 'assets/textures/asphalt.jpg', repeat: [4, 20] },
-            { name: 'sky', path: 'assets/textures/sky.jpg', repeat: [1, 1] }
+            { name: 'grass', path: './assets/textures/grass.jpg', repeat: [8, 8] },
+            { name: 'asphalt', path: './assets/textures/asphalt.jpg', repeat: [4, 20] },
+            { name: 'sky', path: './assets/textures/sky.jpg', repeat: [1, 1] }
         ];
 
         this.totalTextures = textureDefinitions.length;

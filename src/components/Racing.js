@@ -265,7 +265,7 @@ export class Racing {
         console.log(`Creating player model with character index: ${characterIndex}, character:`, character);
         
         try {
-            const gltf = await this.game.loader.loadAsync(`assets/models/snail_${characterIndex + 1}.glb`);
+            const gltf = await this.game.loader.loadAsync(`./assets/models/snail_${characterIndex + 1}.glb`);
             model = gltf.scene.clone();
             
             model.traverse((child) => {
@@ -329,7 +329,7 @@ export class Racing {
             
             console.log(`AI ${index}: Using model ${modelIndex}, player has ${playerCharacterIndex + 1}`);
             
-            const gltf = await this.game.loader.loadAsync(`assets/models/snail_${modelIndex}.glb`);
+            const gltf = await this.game.loader.loadAsync(`./assets/models/snail_${modelIndex}.glb`);
             model = gltf.scene.clone();
             
             model.traverse((child) => {

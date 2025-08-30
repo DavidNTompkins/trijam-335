@@ -97,7 +97,7 @@ export class CharacterSelect {
             let model;
             
             try {
-                const gltf = await this.game.loader.loadAsync(`assets/models/snail_${i + 1}.glb`);
+                const gltf = await this.game.loader.loadAsync(`./assets/models/snail_${i + 1}.glb`);
                 model = gltf.scene;
                 model.traverse((child) => {
                     if (child.isMesh) {

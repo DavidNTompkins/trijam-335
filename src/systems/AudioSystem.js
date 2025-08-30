@@ -16,7 +16,7 @@ export class AudioSystem {
       ? opts.musicPaths
       : [
           // Customize as needed
-          'assets/audio/background-music.mp3',
+          './assets/audio/background-music.mp3',
           'assets/audio/background_music.mp3',
           'assets/audio/music.mp3'
         ];
