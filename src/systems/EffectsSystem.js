@@ -33,18 +33,18 @@ export class EffectsSystem {
         for (let i = 0; i < count; i++) {
             const particle = {
                 position: position.clone().add(new THREE.Vector3(
-                    (Math.random() - 0.5) * 2,
-                    Math.random() * 2,
-                    (Math.random() - 0.5) * 2
+                    (Math.random() - 0.5) * 1.5,  // Reduced spread
+                    Math.random() * 1.5,  // Reduced spread
+                    (Math.random() - 0.5) * 1.5
                 )),
                 velocity: new THREE.Vector3(
-                    (Math.random() - 0.5) * 10,
-                    Math.random() * 8 + 2,
-                    (Math.random() - 0.5) * 10
+                    (Math.random() - 0.5) * 6,  // Reduced velocity
+                    Math.random() * 5 + 1,  // Reduced velocity
+                    (Math.random() - 0.5) * 6
                 ),
-                life: 1.0,
-                maxLife: 1.0,
-                size: Math.random() * 0.8 + 0.2,
+                life: 0.6,  // Shorter life
+                maxLife: 0.6,
+                size: Math.random() * 0.4 + 0.1,  // Smaller particles
                 color: new THREE.Color(color),
                 gravity: -9.8,
                 type: 'explosion'
@@ -112,7 +112,7 @@ export class EffectsSystem {
         const material = new THREE.MeshBasicMaterial({
             color: particle.color,
             transparent: true,
-            opacity: 1.0
+            opacity: 0.4  // Reduced from 1.0 to 0.4 for less opacity
         });
         
         particle.mesh = new THREE.Mesh(geometry, material);
@@ -276,7 +276,7 @@ export class EffectsSystem {
                 particle.mesh.position.copy(particle.position);
                 
                 const alpha = particle.life / particle.maxLife;
-                particle.mesh.material.opacity = alpha;
+                particle.mesh.material.opacity = alpha * 0.4;  // Keep max opacity at 0.4
                 
                 if (particle.type === 'speed') {
                     particle.mesh.scale.setScalar(alpha);

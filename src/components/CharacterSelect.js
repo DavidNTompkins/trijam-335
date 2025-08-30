@@ -48,7 +48,7 @@ export class CharacterSelect {
                 handling: 1.0
             },
             {
-                name: "Turbo",
+                name: "Sally",
                 description: "The fastest snail in the west",
                 color: 0xFF6B6B,
                 speed: 1.8,
@@ -86,11 +86,11 @@ export class CharacterSelect {
 
     async createCharacterModels() {
         const positions = [
-            { x: -12, y: 0, z: 0 },
-            { x: -6, y: 0, z: 0 },
+            { x: -1, y: 0, z: 0 },
+            { x: 0.1, y: 0, z: 0 },
             { x: 0, y: 0, z: 0 },
-            { x: 6, y: 0, z: 0 },
-            { x: 12, y: 0, z: 0 }
+            { x: 0.5, y: 0, z: 0 },
+            { x: 1, y: 0, z: 0 }
         ];
 
         for (let i = 0; i < this.characters.length; i++) {
@@ -185,7 +185,7 @@ export class CharacterSelect {
             } else {
                 const distance = Math.abs(index - this.currentCharacterIndex);
                 const direction = index < this.currentCharacterIndex ? -1 : 1;
-                targetX = direction * (15 + distance * 8);
+                targetX = direction * (5 + distance * 8);
             }
             
             this.animateModelPosition(model, targetX, () => {

@@ -44,6 +44,9 @@ export class Game {
         await this.textureManager.loadTextures();
         await this.audioSystem.init();
         
+        const startBtn = document.getElementById('start-button');
+        this.audioSystem.armOnFirstGesture([document, this.renderer.domElement, startBtn]);
+        this.audioSystem.startBackgroundMusic();
         // Update background with sky texture
         this.updateSceneBackground();
         
@@ -96,7 +99,7 @@ export class Game {
         this.components.characterSelect = new CharacterSelect(this);
         this.components.racing = new Racing(this);
         
-        this.components.startMenu.show();
+        this.setState('start');
     }
 
     bindEvents() {

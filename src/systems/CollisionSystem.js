@@ -9,7 +9,7 @@ export class CollisionSystem {
             maxZ: 50
         };
         
-        this.collisionRadius = 2.0;
+        this.collisionRadius = 1.0;
         this.bounceStrength = 0.8;
         this.dampening = 0.9;
     }
@@ -62,14 +62,14 @@ export class CollisionSystem {
             
             // Separate the racers
             const overlap = this.collisionRadius - distance;
-            const separation = normal.clone().multiplyScalar(overlap * 0.5);
+            const separation = normal.clone().multiplyScalar(overlap);
             
             racer1.position.add(separation);
             racer2.position.sub(separation);
             
             // Only apply velocity changes to player (who has velocity)
             if (racer1.velocity && racer1.velocity.length && racer1.velocity.length() > 0) {
-                const impulse = normal.clone().multiplyScalar(-2);
+                const impulse = normal.clone().multiplyScalar(2);
                 racer1.velocity.add(impulse);
                 racer1.velocity.multiplyScalar(0.8);
             }
@@ -110,18 +110,18 @@ export class CollisionSystem {
 
     createCollisionEffect(position, game) {
         if (game.effectsSystem) {
-            // Create sparks/impact particles
+            // Create sparks/impact particles - reduced intensity
             game.effectsSystem.createParticleExplosion(
                 position.clone().add(new THREE.Vector3(0, 0.5, 0)),
                 0xFFAA00,
-                8
+                1  // Reduced from 8 to 3
             );
         }
         
         
-        // Add camera shake if player is involved
+        // Add camera shake if player is involved - reduced intensity
         if (game.components.racing) {
-            game.components.racing.addCameraShake(0.3);
+            game.components.racing.addCameraShake(0.1);  // Reduced from 0.3 to 0.1
         }
     }
 }

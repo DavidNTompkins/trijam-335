@@ -151,7 +151,8 @@ export class Racing {
         const markingGroup = new THREE.Group();
         const trackPoints = this.trackPath.getPoints(200);
         
-        for (let i = 0; i < trackPoints.length; i += 12) {
+        // Skip start/finish area completely - avoid first 20 and last 20 points
+        for (let i = 20; i < trackPoints.length - 20; i += 15) {
             const point = trackPoints[i];
             const nextIndex = (i + 6) % trackPoints.length;
             const nextPoint = trackPoints[nextIndex];
@@ -159,7 +160,7 @@ export class Racing {
             const direction = new THREE.Vector3().subVectors(nextPoint, point).normalize();
             const angle = Math.atan2(direction.z, direction.x);
             
-            const markingGeometry = new THREE.BoxGeometry(3, 0.05, 0.8);
+            const markingGeometry = new THREE.BoxGeometry(2.5, 0.05, 0.6);
             const markingMaterial = new THREE.MeshLambertMaterial({ color: 0xFFFFFF });
             const marking = new THREE.Mesh(markingGeometry, markingMaterial);
             
@@ -286,29 +287,32 @@ export class Racing {
     }
 
     setupAIRacers() {
-        const aiCount = 5;
-        const colors = [0xFF6B6B, 0x4ECDC4, 0xFFE66D, 0xFF8B94, 0x95E1D3];
+        // Don't create AI models here, wait for racing to start
+        const aiCount = 4;  // Reduced to 4 since player takes 1 slot
+        const colors = [0xFF6B6B, 0x4ECDC4, 0xFFE66D, 0xFF8B94];
         
         for (let i = 0; i < aiCount; i++) {
+            const startPos = new THREE.Vector3(-38 + (i + 1) * 2, 0.5, -20);
             const ai = {
                 model: null,
-                position: new THREE.Vector3(-38 + i * 2, 0, -20),
+                position: startPos.clone(),  // Start at same position
                 rotation: Math.PI / 2,
-                speed: 0.8 + Math.random() * 0.4,
+                speed: 2.4 + Math.random() * 0.4,
                 lap: 0,
                 trackProgress: 0,
                 targetTrackProgress: (i + 1) * 0.1,
-                personality: Math.random()
+                personality: Math.random(),
+                color: colors[i],
+                startPosition: startPos.clone()  // Store starting position
             };
             
-            this.createAIModel(ai, colors[i], i);
             this.aiRacers.push(ai);
         }
     }
 
-    async createAIModel(ai, color, index) {
+    async createAIModel(ai, index) {
         let model;
-        const playerCharacterIndex = this.game.selectedCharacterIndex || 0;
+        const playerCharacterIndex = this.game.selectedCharacterIndex !== undefined ? this.game.selectedCharacterIndex : 0;
         
         try {
             // Create list of all available models (1-5) excluding the player's choice
@@ -331,13 +335,14 @@ export class Racing {
             });
         } catch (error) {
             console.log(`Could not load AI model, using placeholder`);
-            model = this.createPlaceholderSnail(color);
+            model = this.createPlaceholderSnail(ai.color);
         }
         
-        model.position.copy(ai.position);
-        model.position.y = 0.5;
-        model.rotation.y = ai.rotation - Math.PI/2;
+        // Set starting position
+        model.position.copy(ai.startPosition);
+        model.rotation.y = ai.rotation;
         model.scale.set(1.2, 1.2, 1.2);
+        model.visible = false;
         
         ai.model = model;
         this.game.scene.add(model);
@@ -551,10 +556,14 @@ export class Racing {
                 targetPosition.add(perpendicular.multiplyScalar(personalityOffset));
                 
                 ai.position.lerp(targetPosition, deltaTime * 3);
+            } else {
+                // Stay at starting position before race starts
+                ai.position.copy(ai.startPosition);
             }
             
             ai.model.position.copy(ai.position);
-            ai.model.rotation.y = ai.rotation - Math.PI/2;
+            // Fix rotation to match player rotation logic
+            ai.model.rotation.y = -1 * ai.rotation + Math.PI/2;
             
             const bobbing = Math.sin(this.time * 4 + ai.personality * 10) * 0.1;
             ai.model.position.y = 0.5 + bobbing;
@@ -658,6 +667,13 @@ export class Racing {
         // Create player model with selected character
         if (!this.player.model) {
             await this.createPlayerModel();
+        }
+        
+        // Create AI models now that we know the player's character
+        for (let i = 0; i < this.aiRacers.length; i++) {
+            if (!this.aiRacers[i].model) {
+                await this.createAIModel(this.aiRacers[i], i);
+            }
         }
         
         if (this.player.model) this.player.model.visible = true;
